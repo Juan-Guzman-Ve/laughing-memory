@@ -2,111 +2,178 @@
 
 ## Overview
 
-This guide explains how to create a `.vsix` file for installing and distributing your MCP VS Code extension.
+This guide explains how to create a `.vsix` file for distributing your MCP VS Code extension within your organization. The VSIX package is a self-contained installer that can be shared with team members without publishing to the VS Code Marketplace.
 
 ---
 
 ## Prerequisites
 
 Ensure you have:
-1. ✅ Completed `npm install`
-2. ✅ VS Code Extension Manager (vsce) installed globally
-3. ✅ Project compiled successfully
+1. ✅ Node.js 18.x or higher installed
+2. ✅ Project dependencies installed (`npm install`)
+3. ✅ VS Code Extension Manager (vsce) installed as dev dependency
 
-**Check your setup:**
+**Verify your setup:**
 ```powershell
-# Verify vsce is installed
-vsce --version
+# Check Node.js version
+node --version  # Should show v18.x or higher
 
-# Verify project is compiled
-Test-Path .\dist
+# Verify project dependencies
+Test-Path .\node_modules\@vscode\vsce
+
+# Verify TypeScript configuration
+Test-Path .\tsconfig.json
 ```
 
 ---
 
-## Step 1: Update Package Information
+## Step 1: Package Configuration
 
-Before building, update your [package.json](../package.json):
+Your [package.json](../mcp-vscode-extension/package.json) must have these required fields:
 
 ```json
 {
   "name": "mcp-vscode-extension",
   "displayName": "MCP Server Extension",
   "version": "0.0.1",
-  "publisher": "your-publisher-name",  // ⚠️ Change this
-  "description": "Model Context Protocol server as a VS Code extension"
+  "publisher": "chalcp",
+  "license": "UNLICENSED",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "main": "./dist/extension.js"
 }
 ```
 
-**Important fields:**
-- `publisher` - Your VS Code Marketplace publisher name (required)
-- `version` - Semantic version (increment for updates)
-- `displayName` - User-friendly extension name
+**Critical fields:**
+- `publisher` - Identifier for your organization (lowercase, no spaces)
+- `engines.vscode` - Minimum VS Code version required
+- `main` - Entry point to compiled extension code
+- `license` - Use "UNLICENSED" for internal-only extensions
+- `version` - Semantic version (increment for each release)
 
 ---
 
-## Step 2: Compile the Project
+## Step 2: Required Assets
 
-Ensure TypeScript is compiled to JavaScript:
+Before building, ensure these files exist:
+
+### LICENSE File
+A LICENSE file is required by vsce. For internal extensions:
+
+```text
+Copyright (c) 2025 chalCP
+
+This software is proprietary and confidential.
+Unauthorized copying, distribution, or use is strictly prohibited.
+For internal organizational use only.
+```
+
+### Icon File (Optional)
+Place a 128x128 PNG icon in the extension root and reference it:
+```json
+"icon": "icon.png"
+```
+
+---
+
+## Step 3: Compile the Project
+
+Compile TypeScript source code to JavaScript:
 
 ```powershell
+cd mcp-vscode-extension
 npm run compile
 ```
 
-This creates the `dist/` folder with compiled code.
+**What happens:**
+- TypeScript compiler (`tsc`) reads `tsconfig.json`
+- Compiles all `.ts` files from `src/` directory
+- Outputs JavaScript files to `dist/` directory
+- Generates source maps for debugging
 
 **Verify compilation:**
-- Check that `dist/extension.js` exists
-- Check that `dist/server/index.js` exists
+```powershell
+Test-Path .\dist\extension.js          # Main entry point
+Test-Path .\dist\serverManager.js      # Server manager
+Test-Path .\dist\server\mcpServer.js   # MCP server implementation
+```
 
 ---
 
-## Step 3: Build VSIX Package
+## Step 4: Build VSIX Package
 
-Run the packaging command:
+Create the distributable VSIX file:
 
 ```powershell
 npm run package
 ```
 
-**Or manually:**
+**What happens:**
+1. Runs `vscode:prepublish` script (compiles code)
+2. Validates `package.json` manifest
+3. Checks for required files (LICENSE, README)
+4. Bundles extension files and dependencies
+5. Creates `.vsix` file in project root
+
+**Expected output:**
+```
+✓ Packaged: C:\git\chalCP\mcp-vscode-extension\mcp-vscode-extension-0.0.1.vsix
+  (1169 files, 1.48 MB)
+```
+
+**What's included in the VSIX:**
+- `dist/` - Compiled JavaScript and source maps
+- `node_modules/@modelcontextprotocol/sdk` - MCP SDK dependency
+- `package.json` - Extension manifest
+- `LICENSE` - License file
+- `README.md` - Documentation
+- `icon.png` - Extension icon
+
+**What's excluded:**
+- `src/` - TypeScript source files
+- `tsconfig.json` - Build configuration
+- `.git/` - Version control files
+- Build scripts and other development files
+
+---
+
+## Step 5: Install the VSIX
+
+### Option A: Command Line Installation (Recommended)
+
 ```powershell
-vsce package
+# Navigate to extension directory
+cd c:\git\chalCP\mcp-vscode-extension
+
+# Install the extension
+code --install-extension mcp-vscode-extension-0.0.1.vsix
 ```
 
 **Output:**
 ```
-mcp-vscode-extension-0.0.1.vsix
-```
-
-The `.vsix` file is created in the project root.
-
----
-
-## Step 4: Install the VSIX
-
-### Option A: Command Line Installation
-
-```powershell
-code --install-extension mcp-vscode-extension-0.0.1.vsix
+Installing extensions...
+Extension 'mcp-vscode-extension-0.0.1.vsix' was successfully installed.
 ```
 
 ### Option B: VS Code UI Installation
 
 1. Open VS Code
-2. Go to Extensions (Ctrl+Shift+X)
-3. Click "..." menu (top right)
+2. Press `Ctrl+Shift+X` to open Extensions panel
+3. Click "..." menu (top right corner)
 4. Select "Install from VSIX..."
-5. Browse to your `.vsix` file
-6. Click "Install"
+5. Navigate to `c:\git\chalCP\mcp-vscode-extension\`
+6. Select `mcp-vscode-extension-0.0.1.vsix`
+7. Click "Install" and reload VS Code when prompted
 
-### Option C: Manual Installation
+### Distributing to Team Members
 
-Copy the `.vsix` file to:
-- **Windows**: `%USERPROFILE%\.vscode\extensions\`
-- **macOS/Linux**: `~/.vscode/extensions/`
+Share the `.vsix` file via:
+- **Network share**: Copy to shared drive
+- **Email**: Attach the `.vsix` file
+- **Internal repository**: Upload to artifact storage
 
-Then reload VS Code.
+Team members can install using either method above.
 
 ---
 
@@ -115,80 +182,117 @@ Then reload VS Code.
 After installation:
 
 1. **Check Extension is Loaded**
-   - Extensions panel → Search "MCP Server"
-   - Should show as installed
+   - Press `Ctrl+Shift+X` (Extensions panel)
+   - Search "MCP Server"
+   - Should show as installed with version number
 
 2. **Test Commands**
-   - Press `Ctrl+Shift+P`
+   - Press `Ctrl+Shift+P` (Command Palette)
    - Type "MCP: Start Server"
-   - Check Output panel → "MCP Server"
+   - Check Output panel → Select "MCP Server"
+   - Should see server initialization logs
 
 3. **Check Status Bar**
-   - Look for MCP Server indicator (bottom right)
+   - Look for MCP Server indicator (bottom status bar)
+   - Click indicator for quick server controls
 
 ---
 
 ## Troubleshooting
 
-### Error: "Missing publisher name"
+### Error: "Manifest missing field: engines"
 
-Update `publisher` field in [package.json](../package.json):
+**Cause:** The `engines` field is missing or malformed in package.json.
+
+**Solution:** Add engines specification:
 ```json
-"publisher": "your-name-or-org"
+"engines": {
+  "vscode": "^1.85.0"
+}
+```
+
+### Error: "LICENSE, LICENSE.md, or LICENSE.txt not found"
+
+**Cause:** vsce requires a LICENSE file for all packages.
+
+**Solution:** Create a LICENSE file in the extension root:
+```powershell
+New-Item -Path .\LICENSE -ItemType File
+# Add license text for internal use
+```
+
+### Error: "The specified icon wasn't found"
+
+**Cause:** Icon path in package.json points to non-existent file.
+
+**Solution:** 
+```powershell
+# Copy icon to extension directory
+Copy-Item "..\resources\icon.png" ".\icon.png"
+
+# Update package.json to use local path
+"icon": "icon.png"
 ```
 
 ### Error: "dist folder not found"
 
-Run compilation first:
+**Cause:** TypeScript hasn't been compiled yet.
+
+**Solution:**
 ```powershell
 npm run compile
 ```
 
-### Error: "vsce not found"
+### Warning: "Extension consists of 1169 files"
 
-Install vsce globally:
+**Cause:** Large number of files from dependencies included in VSIX.
+
+**Impact:** Larger package size (1.48 MB) but not critical for internal distribution.
+
+**Optional optimization:** Consider bundling with webpack/esbuild to reduce file count.
+
+---
+
+## Automated Build Process
+
+For streamlined builds, use the automated script:
+
 ```powershell
-npm install -g @vscode/vsce
+.\build\Build-VSIX.ps1
 ```
 
-### Warning: README links broken
+This script automatically:
+1. Compiles TypeScript code
+2. Increments the patch version
+3. Creates the VSIX package
+4. Reports the output location
 
-Add repository URL to [package.json](../package.json):
-```json
-"repository": {
-  "type": "git",
-  "url": "https://github.com/your-username/mcp-vscode-extension"
-}
-```
-
-Or skip warning:
-```powershell
-vsce package --no-yarn
-```
+See [Build-VSIX.ps1](../build/Build-VSIX.ps1) for details.
 
 ---
 
 ## Distribution Options
 
-### 1. Share VSIX File Directly
-Send the `.vsix` file to users who can install it manually.
+### 1. Share VSIX File Directly (Recommended for Internal Use)
+Send the `.vsix` file to users who can install it manually using one of the methods above.
 
-### 2. Publish to VS Code Marketplace
+### 2. Network Share Deployment
 ```powershell
-# Create publisher account at https://marketplace.visualstudio.com/
-vsce publish
+# Copy to shared location
+Copy-Item "mcp-vscode-extension-0.0.1.vsix" "\\network\share\extensions\"
+
+# Users can install from share
+code --install-extension "\\network\share\extensions\mcp-vscode-extension-0.0.1.vsix"
 ```
 
-### 3. Host on GitHub Releases
-1. Create a GitHub release
-2. Upload `.vsix` as release asset
-3. Users download and install
+### 3. Internal Package Repository
+For larger organizations, consider hosting on internal artifact repositories (e.g., Artifactory, Nexus).
 
 ---
 
 ## Version Management
 
-### Update Version
+### Manual Version Update
 ```powershell
 # Increment patch (0.0.1 → 0.0.2)
 npm version patch
@@ -200,34 +304,41 @@ npm version minor
 npm version major
 ```
 
-### Rebuild After Version Update
+### Automated Version Update
+Use the build script which handles versioning automatically:
 ```powershell
-npm run compile
-npm run package
+.\build\Build-VSIX.ps1
 ```
 
 ---
 
 ## Quick Reference
 
-**Full build process:**
+### Full Manual Build Process
 ```powershell
-# 1. Install dependencies (if needed)
+# 1. Navigate to extension directory
+cd c:\git\chalCP\mcp-vscode-extension
+
+# 2. Install dependencies (first time only)
 npm install
 
-# 2. Compile TypeScript
+# 3. Compile TypeScript
 npm run compile
 
-# 3. Package extension
+# 4. Update version (optional)
+npm version patch
+
+# 5. Package extension
 npm run package
 
-# 4. Install locally
-code --install-extension mcp-vscode-extension-0.0.1.vsix
+# 6. Install locally for testing
+code --install-extension mcp-vscode-extension-0.0.2.vsix
 ```
 
-**One-liner (after initial setup):**
+### Quick Build (Automated)
 ```powershell
-npm run compile && npm run package
+# From project root
+.\build\Build-VSIX.ps1
 ```
 
 ---
@@ -235,31 +346,37 @@ npm run compile && npm run package
 ## Files Included in VSIX
 
 The `.vsix` package includes:
-- `dist/` folder (compiled JavaScript)
-- `package.json` (manifest)
-- `.vscodeignore` (controls what's excluded)
-- Required `node_modules` (only MCP SDK)
+- `dist/` - Compiled JavaScript and source maps
+- `package.json` - Extension manifest
+- `LICENSE` - License file
+- `README.md` - User documentation
+- `icon.png` - Extension icon (128x128)
+- `node_modules/@modelcontextprotocol/sdk` - MCP SDK and dependencies
 
-**Excluded** (per `.vscodeignore`):
-- `src/` folder (TypeScript source)
-- `tsconfig.json`
-- `.gitignore`
-- `node_modules` (except MCP SDK)
+**Excluded** (via `.vscodeignore`):
+- `src/` - TypeScript source files
+- `tsconfig.json` - TypeScript configuration
+- `.eslintrc.js` - Linter configuration
+- `.git/`, `.gitignore` - Version control files
+- Development scripts and configuration
 
 ---
 
 ## Best Practices
 
-1. ✅ Always test with F5 before packaging
+1. ✅ Always test with F5 (Extension Development Host) before packaging
 2. ✅ Update version number for each release
-3. ✅ Keep CHANGELOG.md updated
-4. ✅ Test installation on clean VS Code instance
-5. ✅ Verify all commands work after installation
+3. ✅ Test installation on clean VS Code instance before distribution
+4. ✅ Verify all commands work after installation
+5. ✅ Keep README.md updated with installation instructions
+6. ✅ Document breaking changes in release notes
+7. ✅ Use semantic versioning (MAJOR.MINOR.PATCH)
 
 ---
 
 ## Additional Resources
 
-- [VS Code Publishing Guide](https://code.visualstudio.com/api/working-with-extensions/publishing-extension)
+- [VS Code Extension Publishing Guide](https://code.visualstudio.com/api/working-with-extensions/publishing-extension)
 - [vsce Documentation](https://github.com/microsoft/vscode-vsce)
 - [Extension Manifest Reference](https://code.visualstudio.com/api/references/extension-manifest)
+- [MCP SDK Documentation](https://modelcontextprotocol.io/)

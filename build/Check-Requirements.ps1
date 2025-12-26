@@ -2,6 +2,9 @@
 [CmdletBinding()]
 param()
 
+# Import shared utilities
+. "$PSScriptRoot\Utils.ps1"
+
 # Determine project root directory
 $Script:ProjectRoot = if (Test-Path (Join-Path $PSScriptRoot "package.json")) {
     # Script is in root folder
@@ -29,47 +32,6 @@ $Script:Results = @{
 }
 
 #region Helper Functions
-
-
-
-function Write-Header {
-    param(
-        [Parameter(Mandatory)]
-        [string]$Text
-    )
-    
-    Write-Host "`n$('=' * 70)" -ForegroundColor Cyan
-    Write-Host " $Text" -ForegroundColor Cyan
-    Write-Host "$('=' * 70)" -ForegroundColor Cyan
-}
-
-function Write-CheckResult {
-    param(
-        [Parameter(Mandatory)]
-        [string]$Check,
-        
-        [Parameter(Mandatory)]
-        [ValidateSet('Pass', 'Fail', 'Warning')]
-        [string]$Status,
-        
-        [string]$Message
-    )
-    
-    $statusSymbol = switch ($Status) {
-        'Pass'    { '[✓]'; $color = 'Green' }
-        'Fail'    { '[✗]'; $color = 'Red' }
-        'Warning' { '[!]'; $color = 'Yellow' }
-    }
-    
-    Write-Host "$statusSymbol " -ForegroundColor $color -NoNewline
-    Write-Host "$Check" -NoNewline
-    
-    if ($Message) {
-        Write-Host " - $Message" -ForegroundColor Gray
-    } else {
-        Write-Host ""
-    }
-}
 
 function Add-Result {
     <#

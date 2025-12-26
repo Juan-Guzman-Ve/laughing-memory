@@ -3,7 +3,13 @@
   "displayName": "MCP Server Extension",
   "description": "Model Context Protocol server as a VS Code extension",
   "version": "0.0.1",
-  "publisher": "your-publisher-name",
+  "publisher": "chalcp",
+  "license": "UNLICENSED",
+  "icon": "icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Juan-Guzman-Ve/laughing-memory.git"
+  },
   "engines": {
     "vscode": "^1.85.0"
   },
