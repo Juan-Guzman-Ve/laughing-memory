@@ -4,6 +4,11 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import {
+  loadBacklog,
+  formatBacklogList,
+  getWorkItemById as getWorkItemHelper,
+} from "./backlogHelper.js";
 
 export interface MCPServerConfig {
   name: string;
@@ -19,6 +24,10 @@ interface CalculateArgs {
 
 interface TimeArgs {
   format?: string;
+}
+
+interface GetWorkItemArgs {
+  workItemId: number;
 }
 
 export class MCPServer {
@@ -84,6 +93,34 @@ export class MCPServer {
             default: "short",
           },
         },
+      },
+    };
+  }
+
+  private getListCurrentIterationItemsToolDefinition() {
+    return {
+      name: "list_current_iteration_items",
+      description: "List all work items in the current sprint iteration with their owner, state, and type",
+      inputSchema: {
+        type: "object",
+        properties: {},
+      },
+    };
+  }
+
+  private getWorkItemByIdToolDefinition() {
+    return {
+      name: "get_work_item_by_id",
+      description: "Get detailed information about a specific work item by ID, including acceptance criteria, child items, and linked PRs",
+      inputSchema: {
+        type: "object",
+        properties: {
+          workItemId: {
+            type: "number",
+            description: "The ID of the work item to retrieve",
+          },
+        },
+        required: ["workItemId"],
       },
     };
   }
@@ -163,6 +200,22 @@ export class MCPServer {
 
   // #endregion
 
+  // #region Backlog Tools
+
+  private async executeListCurrentIterationItems() {
+    const backlog = await loadBacklog();
+    const formattedList = formatBacklogList(backlog);
+    return this.createSuccessResponse({ items: formattedList });
+  }
+
+  private async executeGetWorkItemById(args: GetWorkItemArgs) {
+    const { workItemId } = args;
+    const workItemDetails = await getWorkItemHelper(workItemId);
+    return this.createSuccessResponse({ workItem: workItemDetails });
+  }
+
+  // #endregion
+
   // #region Response Helpers
 
   private createSuccessResponse(data: unknown) {
@@ -205,6 +258,8 @@ export class MCPServer {
         tools: [
           this.getCalculateToolDefinition(),
           this.getTimeToolDefinition(),
+          this.getListCurrentIterationItemsToolDefinition(),
+          this.getWorkItemByIdToolDefinition(),
         ],
       };
     });
@@ -220,6 +275,10 @@ export class MCPServer {
             return await this.executeCalculate(args as unknown as CalculateArgs);
           case "get_current_time":
             return await this.executeGetCurrentTime(args as unknown as TimeArgs);
+          case "list_current_iteration_items":
+            return await this.executeListCurrentIterationItems();
+          case "get_work_item_by_id":
+            return await this.executeGetWorkItemById(args as unknown as GetWorkItemArgs);
           default:
             throw new Error(`Unknown tool: ${name}`);
         }

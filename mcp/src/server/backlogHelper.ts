@@ -1,9 +1,5 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 export interface WorkItem {
   id: number;
@@ -42,19 +38,20 @@ export interface BacklogData {
 
 /**
  * Load backlog data from JSON file
+ * This is the ONLY place that should access backlog.json directly
  */
 export async function loadBacklog(): Promise<BacklogData> {
-  const dataPath = path.join(__dirname, '../../../data/backlog.json');
+  // From mcp/dist/server/ go up to root, then to data/backlog.json
+  // Or use process.cwd() to get the root
+  const dataPath = path.join(process.cwd(), 'data', 'backlog.json');
   const content = await fs.readFile(dataPath, 'utf-8');
   return JSON.parse(content);
 }
 
 /**
- * Get all items in the current iteration
+ * Format backlog items for list display
  */
-export async function listCurrentIterationItems(): Promise<string> {
-  const backlog = await loadBacklog();
-  
+export function formatBacklogList(backlog: BacklogData): string {
   const summary = backlog.items.map(item => {
     return `ID: ${item.id} | Type: ${item.type} | Title: ${item.title} | State: ${item.state} | Owner: ${item.assignedTo}${item.severity ? ` | Severity: ${item.severity}` : ''}`;
   }).join('\n');
@@ -63,16 +60,9 @@ export async function listCurrentIterationItems(): Promise<string> {
 }
 
 /**
- * Get detailed information about a specific work item by ID
+ * Format detailed work item information
  */
-export async function getWorkItemById(workItemId: number): Promise<string> {
-  const backlog = await loadBacklog();
-  const item = backlog.items.find(i => i.id === workItemId);
-
-  if (!item) {
-    return `Work item ${workItemId} not found in current iteration.`;
-  }
-
+export function formatWorkItemDetails(item: WorkItem): string {
   let details = `ID: ${item.id}\n`;
   details += `Type: ${item.type}\n`;
   details += `Title: ${item.title}\n`;
@@ -98,10 +88,14 @@ export async function getWorkItemById(workItemId: number): Promise<string> {
   if (item.children && item.children.length > 0) {
     details += `\nChild Items:\n`;
     item.children.forEach(child => {
-      details += `  - ID: ${child.id} | Type: ${child.type} | Title: ${child.title} | State: ${child.state}`;
-      if (child.assignedTo) details += ` | Assigned: ${child.assignedTo}`;
-      if (child.severity) details += ` | Severity: ${child.severity}`;
-      details += '\n';
+      details += `  - [${child.type} ${child.id}] ${child.title} (${child.state})`;
+      if (child.assignedTo) {
+        details += ` - ${child.assignedTo}`;
+      }
+      if (child.severity) {
+        details += ` - Severity: ${child.severity}`;
+      }
+      details += `\n`;
     });
   }
 
@@ -109,11 +103,29 @@ export async function getWorkItemById(workItemId: number): Promise<string> {
     details += `\nLinked Items:\n`;
     item.links.forEach(link => {
       details += `  - ${link.type}: ${link.id}`;
-      if (link.repo) details += ` (${link.repo})`;
-      if (link.status) details += ` [${link.status}]`;
-      details += '\n';
+      if (link.repo) {
+        details += ` (${link.repo})`;
+      }
+      if (link.status) {
+        details += ` - Status: ${link.status}`;
+      }
+      details += `\n`;
     });
   }
 
   return details;
+}
+
+/**
+ * Get work item by ID from backlog
+ */
+export async function getWorkItemById(workItemId: number): Promise<string> {
+  const backlog = await loadBacklog();
+  const item = backlog.items.find(i => i.id === workItemId);
+
+  if (!item) {
+    return `Work item ${workItemId} not found in current iteration.`;
+  }
+
+  return formatWorkItemDetails(item);
 }

@@ -1,36 +1,29 @@
 import { processQuery } from './agent.js';
-import * as readline from 'readline';
+import { 
+  createReadlineInterface, 
+  askQuestion, 
+  displayWelcomeBanner, 
+  displayGoodbyeMessage 
+} from './utils/cli.js';
 
 /**
  * Simple CLI interface for testing the agent
  */
 async function main() {
-  console.log('='.repeat(60));
-  console.log('Azure DevOps Agent - Day 1 Demo (Gemini + Read-Only Tools)');
-  console.log('='.repeat(60));
-  console.log('\nType your questions or commands. Type "exit" to quit.\n');
+  displayWelcomeBanner();
 
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-
-  const askQuestion = (query: string): Promise<string> => {
-    return new Promise((resolve) => {
-      rl.question(query, resolve);
-    });
-  };
+  const rl = createReadlineInterface();
 
   try {
     while (true) {
-      const userInput = await askQuestion('\n> ');
+      const userInput = await askQuestion(rl, '\n> ');
       
       if (!userInput || userInput.trim() === '') {
         continue;
       }
 
       if (userInput.toLowerCase() === 'exit') {
-        console.log('\nGoodbye!\n');
+        displayGoodbyeMessage();
         rl.close();
         break;
       }
