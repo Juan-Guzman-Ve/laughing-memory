@@ -95,7 +95,7 @@ npm run compile
 npm run package
 
 # Install
-code --install-extension mcp-vscode-extension-*.vsix
+code --install-extension mcp-*.vsix
 ```
 
 ---
@@ -184,7 +184,7 @@ code --install-extension mcp-vscode-extension-*.vsix
 3. Start the server: `Ctrl+Shift+P` → "MCP: Start Server"
 4. Look for:
    ```
-   MCP Server "mcp-vscode-extension" started
+   MCP Server "mcp" started
    Server is running on stdio transport
    ```
 
@@ -205,7 +205,7 @@ Configure the client to connect to your extension's stdio transport.
 
 ```powershell
 # Navigate to extension directory
-cd c:\git\chalCP\mcp-vscode-extension
+cd c:\git\chalCP\mcp
 
 # Option 1: Use automated script
 ..\build\Build-VSIX.ps1 -SkipVersionIncrement
@@ -382,7 +382,7 @@ case "generate_uuid":
 ```powershell
 npm run compile
 npm run package
-code --install-extension mcp-vscode-extension-*.vsix
+code --install-extension mcp-*.vsix
 # Ctrl+Shift+P → "Developer: Reload Window"
 # Ctrl+Shift+P → "MCP: Start Server"
 ```

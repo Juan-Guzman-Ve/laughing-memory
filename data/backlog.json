@@ -37,6 +37,55 @@
       "severity": "High",
       "tags": ["ux"],
       "children": []
+    },
+    {
+      "id": 125,
+      "type": "UserStory",
+      "title": "As a user, I can view my activity dashboard",
+      "state": "Active",
+      "assignedTo": "David",
+      "area": "Web",
+      "tags": ["dashboard", "analytics"],
+      "acceptanceCriteria": [
+        "Dashboard shows last 30 days of activity",
+        "Data refreshes every 5 minutes",
+        "User can export data to CSV"
+      ],
+      "children": [
+        {"id": 902, "type": "Task", "title": "Design dashboard UI", "state": "Completed", "assignedTo": "Eve"},
+        {"id": 903, "type": "Task", "title": "Implement data aggregation service", "state": "Active", "assignedTo": "Frank"},
+        {"id": 904, "type": "Task", "title": "Add export functionality", "state": "New", "assignedTo": "Grace"}
+      ],
+      "links": [
+        {"type": "PR", "id": "PR-4510", "repo": "web-frontend", "status": "Merged"}
+      ]
+    },
+    {
+      "id": 126,
+      "type": "Task",
+      "title": "Update API documentation for v2.0",
+      "state": "Active",
+      "assignedTo": "Henry",
+      "area": "Documentation",
+      "tags": ["docs", "api"],
+      "children": []
+    },
+    {
+      "id": 127,
+      "type": "Bug",
+      "title": "Memory leak in background sync service",
+      "state": "Active",
+      "assignedTo": "Ivan",
+      "area": "Backend",
+      "severity": "Critical",
+      "tags": ["performance", "backend"],
+      "children": [
+        {"id": 905, "type": "Task", "title": "Profile memory usage", "state": "Completed", "assignedTo": "Ivan"},
+        {"id": 906, "type": "Task", "title": "Implement fix and add unit tests", "state": "Active", "assignedTo": "Ivan"}
+      ],
+      "links": [
+        {"type": "PR", "id": "PR-4515", "repo": "backend-services", "status": "Open"}
+      ]
     }
   ]
 }

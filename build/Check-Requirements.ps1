@@ -9,9 +9,9 @@ param()
 $Script:ProjectRoot = if (Test-Path (Join-Path $PSScriptRoot "package.json")) {
     # Script is in root folder
     $PSScriptRoot
-} elseif (Test-Path (Join-Path $PSScriptRoot "..\mcp-vscode-extension\package.json")) {
+} elseif (Test-Path (Join-Path $PSScriptRoot "..\mcp\package.json")) {
     # Script is in build subfolder
-    Join-Path $PSScriptRoot "..\mcp-vscode-extension"
+    Join-Path $PSScriptRoot "..\mcp"
 } else {
     # Default to current location
     $PSScriptRoot

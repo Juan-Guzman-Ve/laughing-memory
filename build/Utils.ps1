@@ -203,7 +203,7 @@ function Get-ProjectRoot {
     # Check if script is in build folder
     $parentPath = Split-Path -Parent $ScriptRoot
     
-    # Look for mcp-vscode-extension folder
+    # Look for mcp folder
     $extensionPath = Join-Path $parentPath "mcp"
     if (Test-Path $extensionPath) {
         return $parentPath

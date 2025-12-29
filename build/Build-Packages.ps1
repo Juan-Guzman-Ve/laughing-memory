@@ -61,7 +61,7 @@ $ProgressPreference = 'SilentlyContinue'
 
 # Path configuration
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
-$ExtensionDir = Join-Path $ProjectRoot "mcp-vscode-extension"
+$ExtensionDir = Join-Path $ProjectRoot "mcp"
 $PackageJsonPath = Join-Path $ExtensionDir "package.json"
 $DistPath = Join-Path $ExtensionDir "dist"
 $ArtifactsDir = Join-Path $ProjectRoot "artifacts"

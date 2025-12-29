@@ -94,14 +94,14 @@ Located in `package.json` devDependencies:
 ```powershell
 cd c:\git
 git clone <repository-url> chalCP
-cd chalCP\mcp-vscode-extension
+cd chalCP\mcp
 ```
 
 ### Step 2: Install Dependencies
 
 ```powershell
 # Navigate to extension directory
-cd c:\git\chalCP\mcp-vscode-extension
+cd c:\git\chalCP\mcp
 
 # Install all dependencies
 npm install
@@ -186,9 +186,9 @@ Test-Path .\node_modules           # Should be True
 ### Step 1: Make Code Changes
 
 Edit TypeScript files in `src/` directory:
-- [src/extension.ts](../mcp-vscode-extension/src/extension.ts) - Extension entry point
-- [src/serverManager.ts](../mcp-vscode-extension/src/serverManager.ts) - Server lifecycle management
-- [src/server/mcpServer.ts](../mcp-vscode-extension/src/server/mcpServer.ts) - MCP protocol implementation
+- [src/extension.ts](../mcp/src/extension.ts) - Extension entry point
+- [src/serverManager.ts](../mcp/src/serverManager.ts) - Server lifecycle management
+- [src/server/mcpServer.ts](../mcp/src/server/mcpServer.ts) - MCP protocol implementation
 
 ### Step 2: Compile Changes
 
@@ -203,7 +203,7 @@ npm run watch
 
 ### Step 3: Test in Extension Development Host
 
-1. Open project in VS Code: `code c:\git\chalCP\mcp-vscode-extension`
+1. Open project in VS Code: `code c:\git\chalCP\mcp`
 2. Press **F5** to launch Extension Development Host
 3. A new VS Code window opens with the extension loaded
 4. Test commands using **Ctrl+Shift+P**:
@@ -226,7 +226,7 @@ npm run watch
 
 ```
 c:\git\chalCP\
-├── mcp-vscode-extension/          # Extension source code
+├── mcp/          # Extension source code
 │   ├── src/
 │   │   ├── extension.ts           # Extension activation and commands
 │   │   ├── serverManager.ts       # MCP server lifecycle manager
@@ -260,19 +260,19 @@ c:\git\chalCP\
 
 #### Extension Files
 
-**[extension.ts](../mcp-vscode-extension/src/extension.ts)**
+**[extension.ts](../mcp/src/extension.ts)**
 - Entry point for VS Code extension
 - Handles activation and deactivation
 - Registers commands and UI elements
 - Creates output channel for logging
 
-**[serverManager.ts](../mcp-vscode-extension/src/serverManager.ts)**
+**[serverManager.ts](../mcp/src/serverManager.ts)**
 - Manages MCP server lifecycle
 - Spawns Node.js child process
 - Handles server start/stop/restart
 - Monitors server health
 
-**[mcpServer.ts](../mcp-vscode-extension/src/server/mcpServer.ts)**
+**[mcpServer.ts](../mcp/src/server/mcpServer.ts)**
 - Implements MCP protocol server
 - Defines available tools and resources
 - Handles client requests
@@ -280,13 +280,13 @@ c:\git\chalCP\
 
 #### Configuration Files
 
-**[package.json](../mcp-vscode-extension/package.json)**
+**[package.json](../mcp/package.json)**
 - Extension manifest (required by VS Code)
 - Defines commands, settings, activation events
 - Lists dependencies
 - Specifies extension metadata
 
-**[tsconfig.json](../mcp-vscode-extension/tsconfig.json)**
+**[tsconfig.json](../mcp/tsconfig.json)**
 - TypeScript compiler configuration
 - Defines output directory and module system
 - Sets strict type checking rules
@@ -299,7 +299,7 @@ c:\git\chalCP\
 
 ```powershell
 # 1. Navigate to extension directory
-cd c:\git\chalCP\mcp-vscode-extension
+cd c:\git\chalCP\mcp
 
 # 2. Ensure dependencies are installed
 npm install
@@ -313,7 +313,7 @@ npm run package
 
 **Output:**
 ```
-mcp-vscode-extension-0.0.1.vsix (1.48 MB)
+mcp-0.0.1.vsix (1.48 MB)
 ```
 
 ### Automated Build Process
@@ -348,11 +348,11 @@ The extension requires VS Code 1.85.0 or higher.
 
 ### Extension Manifest
 
-Required fields in [package.json](../mcp-vscode-extension/package.json):
+Required fields in [package.json](../mcp/package.json):
 
 ```json
 {
-  "name": "mcp-vscode-extension",
+  "name": "mcp",
   "displayName": "MCP Server Extension",
   "description": "Model Context Protocol server as a VS Code extension",
   "version": "0.0.1",
@@ -384,7 +384,7 @@ Share the `.vsix` file with team members:
 
 ```powershell
 # Users install via command line
-code --install-extension mcp-vscode-extension-0.0.1.vsix
+code --install-extension mcp-0.0.1.vsix
 
 # Or via VS Code UI
 # Extensions → ... → Install from VSIX
@@ -394,10 +394,10 @@ code --install-extension mcp-vscode-extension-0.0.1.vsix
 
 ```powershell
 # Copy to shared location
-Copy-Item "mcp-vscode-extension-0.0.1.vsix" "\\network\extensions\"
+Copy-Item "mcp-0.0.1.vsix" "\\network\extensions\"
 
 # Users install from network
-code --install-extension "\\network\extensions\mcp-vscode-extension-0.0.1.vsix"
+code --install-extension "\\network\extensions\mcp-0.0.1.vsix"
 ```
 
 ### Option 3: Internal Package Repository
@@ -579,7 +579,7 @@ Located at [build/Build-VSIX.ps1](../build/Build-VSIX.ps1), this PowerShell scri
   ✓ Version updated: 0.0.1 → 0.0.2
 
 [10:30:18] Creating VSIX package...
-  ✓ VSIX package created: mcp-vscode-extension-0.0.2.vsix (1.48 MB)
+  ✓ VSIX package created: chalcp-0.0.2.vsix (1.48 MB)
   Package contains 1169 files
 
 ========================================
@@ -587,11 +587,11 @@ Located at [build/Build-VSIX.ps1](../build/Build-VSIX.ps1), this PowerShell scri
 ========================================
 
 Extension Version: 0.0.2
-VSIX Location:     C:\git\chalCP\mcp-vscode-extension\mcp-vscode-extension-0.0.2.vsix
+VSIX Location:     C:\git\chalCP\artifacts\chalcp-0.0.2.vsix
 VSIX Size:         1.48 MB
 
 Installation Command:
-  code --install-extension "C:\git\chalCP\mcp-vscode-extension\mcp-vscode-extension-0.0.2.vsix"
+  code --install-extension "C:\git\chalCP\artifacts\chalcp-0.0.2.vsix"
 ```
 
 ---
@@ -615,7 +615,7 @@ The build script uses `--no-git-tag-version` when updating versions:
 git diff package.json
 
 # 3. Commit if satisfied
-git add mcp-vscode-extension/package.json
+git add mcp/package.json
 git commit -m "Release v0.0.2"
 
 # 4. Tag release (optional)
@@ -628,7 +628,7 @@ git tag v0.0.2
 
 ### Documentation
 - [Building VSIX Guide](BUILDING_VSIX.md) - Detailed build instructions
-- [Extension README](../mcp-vscode-extension/README.md) - User documentation
+- [Extension README](../mcp/README.md) - User documentation
 
 ### External Resources
 - [VS Code Extension API](https://code.visualstudio.com/api) - Official API documentation
@@ -661,11 +661,11 @@ For internal support:
 
 | Item | Path |
 |------|------|
-| Extension source | `c:\git\chalCP\mcp-vscode-extension\src\` |
-| Compiled output | `c:\git\chalCP\mcp-vscode-extension\dist\` |
-| Package manifest | `c:\git\chalCP\mcp-vscode-extension\package.json` |
+| Extension source | `c:\git\chalCP\mcp\src\` |
+| Compiled output | `c:\git\chalCP\mcp\dist\` |
+| Package manifest | `c:\git\chalCP\mcp\package.json` |
 | Build script | `c:\git\chalCP\build\Build-VSIX.ps1` |
-| VSIX output | `c:\git\chalCP\mcp-vscode-extension\*.vsix` |
+| VSIX output | `c:\git\chalCP\mcp\*.vsix` |
 
 ### VS Code Commands
 

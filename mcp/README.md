@@ -95,7 +95,7 @@ Create a new file in the workspace.
 ## Project Structure
 
 ```
-mcp-vscode-extension/
+mcp/
 ├── src/
 │   ├── extension.ts          # Extension entry point
 │   ├── serverManager.ts      # Server lifecycle management
@@ -154,7 +154,7 @@ npm run build
 ```bash
 # Clone repository
 git clone <your-repo-url>
-cd mcp-vscode-extension
+cd mcp
 
 # Install dependencies
 npm install
@@ -174,7 +174,7 @@ npm run package
 ### From VSIX File
 
 ```bash
-code --install-extension mcp-vscode-extension-0.0.1.vsix
+code --install-extension chalcp-0.0.1.vsix
 ```
 
 ### From Source (Development)

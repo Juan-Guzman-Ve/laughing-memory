@@ -1,0 +1,24 @@
+# Environment variables
+.env
+
+# Dependencies
+node_modules/
+agent/node_modules/
+mcp/node_modules/
+
+# Build outputs
+dist/
+agent/dist/
+*.vsix
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db

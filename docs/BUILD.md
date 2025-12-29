@@ -4,7 +4,7 @@
 
 - Node.js 18.x or higher
 - PowerShell 7+
-- Run `npm install` in `mcp-vscode-extension` folder
+- Run `npm install` in `mcp` folder
 
 ## Automated Build (Recommended)
 
@@ -40,7 +40,7 @@ Both saved to `../artifacts/`
 If you need to build manually:
 
 ```powershell
-cd mcp-vscode-extension
+cd mcp
 
 # Compile TypeScript
 npm run compile
