@@ -1,6 +1,6 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
-import { Tool } from '@langchain/core/tools';
+import { DynamicStructuredTool } from '@langchain/core/tools';
 import { z } from 'zod';
 import path from 'path';
 
@@ -45,7 +45,7 @@ export class MCPClientWrapper {
   /**
    * Discover tools from MCP server and convert to LangChain tools
    */
-  async getTools(): Promise<Tool[]> {
+  async getTools(): Promise<DynamicStructuredTool[]> {
     if (!this.client) {
       throw new Error('MCP client not connected. Call connect() first.');
     }
@@ -54,35 +54,47 @@ export class MCPClientWrapper {
     const { tools } = await this.client.listTools();
     console.log(`📋 Discovered ${tools.length} MCP tools:`, tools.map(t => t.name));
 
-    // Convert MCP tools to LangChain tools
-    const langchainTools: Tool[] = tools.map((mcpTool) => {
-      return {
+    // Convert MCP tools to LangChain DynamicStructuredTool
+    const langchainTools: DynamicStructuredTool[] = tools.map((mcpTool) => {
+      const schema = this.convertMCPSchemaToZod(mcpTool.inputSchema);
+      
+      return new DynamicStructuredTool({
         name: mcpTool.name,
         description: mcpTool.description || '',
-        schema: this.convertMCPSchemaToZod(mcpTool.inputSchema),
-        call: async (input: any) => {
+        schema: schema,
+        func: async (input: any) => {
           if (!this.client) {
             throw new Error('MCP client disconnected');
           }
 
-          // Call MCP tool
-          const result = await this.client.callTool({
-            name: mcpTool.name,
-            arguments: input,
-          });
+          console.log(`🔧 Calling MCP tool: ${mcpTool.name}`);
+          console.log(`📦 Input:`, JSON.stringify(input, null, 2));
 
-          // Extract text content from MCP response
-          const resultContent = result.content as any;
-          if (resultContent && Array.isArray(resultContent) && resultContent.length > 0) {
-            const textContent = resultContent.find((c: any) => c.type === 'text');
-            if (textContent) {
-              return textContent.text;
+          try {
+            // Call MCP tool
+            const result = await this.client.callTool({
+              name: mcpTool.name,
+              arguments: input || {},
+            });
+
+            console.log(`✅ MCP tool result:`, JSON.stringify(result, null, 2).substring(0, 200));
+
+            // Extract text content from MCP response
+            const resultContent = result.content as any;
+            if (resultContent && Array.isArray(resultContent) && resultContent.length > 0) {
+              const textContent = resultContent.find((c: any) => c.type === 'text');
+              if (textContent) {
+                return textContent.text;
+              }
             }
-          }
 
-          return JSON.stringify(result);
+            return JSON.stringify(result);
+          } catch (error) {
+            console.error(`❌ MCP tool call failed:`, error);
+            throw error;
+          }
         },
-      } as any;
+      });
     });
 
     return langchainTools;

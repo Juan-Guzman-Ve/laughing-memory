@@ -70,3 +70,13 @@ export async function createAgent(): Promise<AgentExecutor> {
 
   return agentExecutor;
 }
+
+/**
+ * Clean up MCP client connection
+ */
+export async function cleanupAgent(): Promise<void> {
+  if (mcpClient) {
+    await mcpClient.disconnect();
+    mcpClient = null;
+  }
+}

@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { initializeModel } from './utils/modelInitializer.js';
+import { initializeModel } from '../utils/modelInitializer.js';
 
 /**
  * Simple test to verify Gemini API connection

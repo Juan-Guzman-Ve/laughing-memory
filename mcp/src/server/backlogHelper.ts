@@ -1,5 +1,10 @@
 import fs from 'fs/promises';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Get the directory of this module file
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export interface WorkItem {
   id: number;
@@ -41,9 +46,10 @@ export interface BacklogData {
  * This is the ONLY place that should access backlog.json directly
  */
 export async function loadBacklog(): Promise<BacklogData> {
-  // From mcp/dist/server/ go up to root, then to data/backlog.json
-  // Or use process.cwd() to get the root
-  const dataPath = path.join(process.cwd(), 'data', 'backlog.json');
+  // From mcp/dist/server/backlogHelper.js go to workspace root, then to data/backlog.json
+  // __dirname will be mcp/dist/server, so we go up 3 levels to workspace root
+  const dataPath = path.resolve(__dirname, '../../../data/backlog.json');
+  console.log('📂 Loading backlog from:', dataPath);
   const content = await fs.readFile(dataPath, 'utf-8');
   return JSON.parse(content);
 }
