@@ -1,8 +1,8 @@
 {
-  "name": "mcp-vscode-extension",
-  "displayName": "MCP Server Extension",
-  "description": "Model Context Protocol server as a VS Code extension",
-  "version": "0.0.1",
+  "name": "chalcp",
+  "displayName": "ChalCP MCP Server",
+  "description": "Model Context Protocol server with calculator and time tools - works as VS Code extension or standalone",
+  "version": "0.1.2",
   "publisher": "chalcp",
   "license": "UNLICENSED",
   "icon": "icon.png",
@@ -10,8 +10,12 @@
     "type": "git",
     "url": "https://github.com/Juan-Guzman-Ve/laughing-memory.git"
   },
+  "bin": {
+    "chalcp-mcp": "./dist/server/index.js"
+  },
   "engines": {
-    "vscode": "^1.85.0"
+    "vscode": "^1.85.0",
+    "node": ">=18.0.0"
   },
   "categories": [
     "Other"
@@ -33,6 +37,14 @@
       {
         "command": "mcp-extension.restart",
         "title": "MCP: Restart Server"
+      },
+      {
+        "command": "mcp-extension.testCalculator",
+        "title": "MCP: Test Calculator Tool"
+      },
+      {
+        "command": "mcp-extension.testTime",
+        "title": "MCP: Test Time Tool"
       }
     ],
     "configuration": {
@@ -68,8 +80,10 @@
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile",
     "lint": "eslint src --ext ts",
-    "package": "vsce package",
-    "build": "npm run compile"
+    "package": "vsce package --out ../artifacts",
+    "pack": "npm run compile && npm pack --pack-destination ../artifacts",
+    "build": "npm run compile",
+    "start": "node dist/server/index.js"
   },
   "devDependencies": {
     "@types/node": "^20.x",
@@ -82,5 +96,12 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.25.1"
-  }
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "ai-tools",
+    "vscode-extension",
+    "calculator"
+  ]
 }

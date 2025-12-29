@@ -2,15 +2,16 @@
 
 <#
 .SYNOPSIS
-    Automated VSIX build script for MCP VS Code Extension
+    Automated build script for ChalCP dual-purpose package
     
 .DESCRIPTION
-    This script automates the process of building a VSIX package:
+    This script automates the process of building both VS Code extension and npm packages:
     1. Validates environment and dependencies
     2. Compiles TypeScript source code
     3. Increments the package version (patch)
-    4. Creates the VSIX package
-    5. Reports the output location
+    4. Creates the VSIX package (for VS Code)
+    5. Creates the npm .tgz package (for standalone MCP server)
+    6. Reports the output location
     
 .PARAMETER VersionType
     Type of version increment: patch, minor, or major (default: patch)
@@ -63,6 +64,7 @@ $ProjectRoot = Split-Path -Parent $PSScriptRoot
 $ExtensionDir = Join-Path $ProjectRoot "mcp-vscode-extension"
 $PackageJsonPath = Join-Path $ExtensionDir "package.json"
 $DistPath = Join-Path $ExtensionDir "dist"
+$ArtifactsDir = Join-Path $ProjectRoot "artifacts"
 
 #region Helper Functions
 
@@ -75,10 +77,19 @@ function Get-PackageVersion {
 #region Validation
 
 Write-Host "`n========================================" -ForegroundColor Cyan
-Write-Host "  MCP Extension VSIX Build Script" -ForegroundColor Cyan
+Write-Host "  ChalCP Build Script" -ForegroundColor Cyan
 Write-Host "========================================`n" -ForegroundColor Cyan
 
 Write-Step "Validating environment..."
+
+# Create artifacts directory if it doesn't exist
+if (-not (Test-Path $ArtifactsDir)) {
+    New-Item -Path $ArtifactsDir -ItemType Directory | Out-Null
+    Write-Success "Created artifacts directory"
+}
+else {
+    Write-Success "Artifacts directory exists"
+}
 
 # Check Node.js
 if (-not (Test-Command 'node')) {
@@ -231,10 +242,13 @@ Write-Step "Creating VSIX package..."
 
 Push-Location $ExtensionDir
 try {
-    # Remove old VSIX files
-    Get-ChildItem -Filter "*.vsix" | Remove-Item -Force -ErrorAction SilentlyContinue
+    # Clean old artifacts at the beginning
+    if (Test-Path $ArtifactsDir) {
+        Get-ChildItem $ArtifactsDir -Filter "chalcp-*.vsix" | Remove-Item -Force -ErrorAction SilentlyContinue
+        Get-ChildItem $ArtifactsDir -Filter "chalcp-*.tgz" | Remove-Item -Force -ErrorAction SilentlyContinue
+    }
     
-    # Create VSIX
+    # Create VSIX (will output to ../artifacts due to package.json script)
     $packageOutput = npm run package 2>&1
     
     if ($LASTEXITCODE -ne 0) {
@@ -243,25 +257,65 @@ try {
         exit 1
     }
     
-    # Find created VSIX file
-    $vsixFile = Get-ChildItem -Filter "*.vsix" | Select-Object -First 1
+    # Find created VSIX file in artifacts directory
+    $vsixFile = Get-ChildItem $ArtifactsDir -Filter "*.vsix" | Select-Object -First 1
     
     if (-not $vsixFile) {
-        Write-ErrorMsg "VSIX file not found after packaging"
+        Write-ErrorMsg "VSIX file not found in artifacts directory"
         exit 1
     }
     
     $vsixSize = [math]::Round($vsixFile.Length / 1MB, 2)
     Write-Success "VSIX package created: $($vsixFile.Name) ($vsixSize MB)"
+    Write-InfoMsg "Location: artifacts\"
     
-    # Get file count from output
-    if ($packageOutput -match '(\d+) files') {
+    # Get file count from output (optional, don't fail if not found)
+    $packageOutputString = $packageOutput -join "`n"
+    if ($packageOutputString -match '(\d+) files') {
         $fileCount = $matches[1]
         Write-InfoMsg "Package contains $fileCount files"
     }
 }
 catch {
     Write-ErrorMsg "Packaging error: $_"
+    Write-Host "Error details: $($_.Exception.Message)"
+    Write-Host "Stack trace: $($_.ScriptStackTrace)"
+    exit 1
+}
+finally {
+    Pop-Location
+}
+
+#endregion
+
+#region NPM Package
+
+Write-Step "Creating npm package..."
+
+Push-Location $ExtensionDir
+try {
+    # Create npm package (will output to ../artifacts due to package.json script)
+    $packOutput = npm run pack 2>&1
+    
+    if ($LASTEXITCODE -ne 0) {
+        Write-ErrorMsg "npm pack failed"
+        Write-Host $packOutput
+        exit 1
+    }
+    
+    # Find created .tgz file in artifacts directory
+    $tgzFile = Get-ChildItem $ArtifactsDir -Filter "*.tgz" | Select-Object -First 1
+    
+    if (-not $tgzFile) {
+        Write-ErrorMsg ".tgz file not found in artifacts directory"
+        exit 1
+    }
+    
+    $tgzSize = [math]::Round($tgzFile.Length / 1KB, 2)
+    Write-Success "npm package created: $($tgzFile.Name) ($tgzSize KB)"
+}
+catch {
+    Write-ErrorMsg "npm pack error: $_"
     exit 1
 }
 finally {
@@ -277,17 +331,27 @@ Write-Host "  Build Complete!" -ForegroundColor Green
 Write-Host "========================================`n" -ForegroundColor Green
 
 $finalVersion = Get-PackageVersion
-Write-Host "Extension Version: " -NoNewline
+Write-Host "Package Version:    " -NoNewline
 Write-Host $finalVersion -ForegroundColor Green
 
-Write-Host "VSIX Location:     " -NoNewline
-Write-Host $vsixFile.FullName -ForegroundColor Green
-
-Write-Host "VSIX Size:         " -NoNewline
+Write-Host "`nVS Code Extension:" -ForegroundColor Cyan
+Write-Host "  File:    " -NoNewline
+Write-Host $vsixFile.Name -ForegroundColor Green
+Write-Host "  Size:    " -NoNewline
 Write-Host "$vsixSize MB" -ForegroundColor Green
+Write-Host "  Install: " -NoNewline
+Write-Host "code --install-extension `"$($vsixFile.FullName)`"" -ForegroundColor Gray
 
-Write-Host "`nInstallation Command:" -ForegroundColor Cyan
-Write-Host "  code --install-extension `"$($vsixFile.FullName)`"" -ForegroundColor Gray
+Write-Host "`nStandalone MCP Server:" -ForegroundColor Cyan
+Write-Host "  File:    " -NoNewline
+Write-Host $tgzFile.Name -ForegroundColor Green
+Write-Host "  Size:    " -NoNewline
+Write-Host "$tgzSize KB" -ForegroundColor Green
+Write-Host "  Extract: " -NoNewline
+Write-Host "tar -xzf `"$($tgzFile.FullName)`"" -ForegroundColor Gray
+
+Write-Host "`nArtifacts Location: " -NoNewline
+Write-Host $ArtifactsDir -ForegroundColor Yellow
 
 Write-Host "`n"
 

@@ -1,53 +1,57 @@
-# MCP VS Code Extension
+# ChalCP MCP Server
 
-A TypeScript-based Model Context Protocol (MCP) server packaged as a VS Code extension.
+A Model Context Protocol (MCP) server providing calculator and time tools.
 
-## Features
+**Dual-Mode Operation:**
+- **VS Code Extension** - Commands and tools integrated in VS Code
+- **Standalone Server** - Use with Claude Desktop, Continue.dev, or any MCP client
 
-- 🚀 MCP server running as VS Code extension
-- 🔧 Example tools for workspace interaction
-- 📊 Status bar indicator
-- ⚙️ Configurable auto-start
-- 📝 Comprehensive logging
+## Tools
+
+- **calculate** - Basic arithmetic (add, subtract, multiply, divide)
+- **get_current_time** - Current date/time with timezone
 
 ## Quick Start
 
-### Installation
+### For VS Code Users
+
+1. Get the VSIX: [Build Instructions](../docs/BUILD.md)
+2. Install: [Installation Guide](../docs/INSTALL_VSIX.md)
+3. Use commands: `Ctrl+Shift+P` → Type "MCP"
+
+### For AI Client Users (Claude, Continue.dev)
+
+1. Get the package: [Build Instructions](../docs/BUILD.md)
+2. Install: [Installation Guide](../docs/INSTALL_STANDALONE.md)
+3. Configure your AI client with `chalcp-mcp` command
+
+## Documentation
+
+- **[Build Packages](../docs/BUILD.md)** - How to build VSIX and npm packages
+- **[Install VSIX](../docs/INSTALL_VSIX.md)** - VS Code extension installation
+- **[Install Standalone](../docs/INSTALL_STANDALONE.md)** - Standalone server setup
+- **[MCP Development](../docs/MCP_DEVELOPMENT_GUIDE.md)** - Add custom tools
+
+## Development
 
 ```bash
 # Install dependencies
 npm install
 
-# Compile TypeScript
+# Compile
 npm run compile
 
-# Package extension
-npm run package
+# Watch mode
+npm run watch
 
-# Install in VS Code
-code --install-extension mcp-vscode-extension-0.0.1.vsix
+# Test in VS Code
+# Press F5 in VS Code to launch Extension Development Host
 ```
 
-### Development
+## License
 
-1. Open folder in VS Code
-2. Press `F5` to launch Extension Development Host
-3. Open Output panel → "MCP Server" to view logs
-4. Use Command Palette (`Ctrl+Shift+P`) to run MCP commands
+UNLICENSED - For internal use only
 
-## Available Commands
-
-- **MCP: Start Server** - Start the MCP server
-- **MCP: Stop Server** - Stop the MCP server  
-- **MCP: Restart Server** - Restart the MCP server
-
-## Configuration
-
-Access settings via `File → Preferences → Settings` or edit `settings.json`:
-
-```json
-{
-  "mcpServer.autoStart": true,
   "mcpServer.port": 3000,
   "mcpServer.logLevel": "info"
 }

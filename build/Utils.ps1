@@ -204,7 +204,7 @@ function Get-ProjectRoot {
     $parentPath = Split-Path -Parent $ScriptRoot
     
     # Look for mcp-vscode-extension folder
-    $extensionPath = Join-Path $parentPath "mcp-vscode-extension"
+    $extensionPath = Join-Path $parentPath "mcp"
     if (Test-Path $extensionPath) {
         return $parentPath
     }
@@ -229,7 +229,7 @@ function Get-ExtensionDirectory {
         [string]$ProjectRoot
     )
     
-    $extensionPath = Join-Path $ProjectRoot "mcp-vscode-extension"
+    $extensionPath = Join-Path $ProjectRoot "mcp"
     
     if (Test-Path $extensionPath) {
         return $extensionPath
@@ -303,26 +303,5 @@ function Set-PackageJsonProperty {
         throw "Failed to update property '$PropertyName' in package.json: $_"
     }
 }
-
-#endregion
-
-#region Export Functions
-
-# Export all functions for use in other scripts
-Export-ModuleMember -Function @(
-    'Write-Header',
-    'Write-Step',
-    'Write-Success',
-    'Write-ErrorMsg',
-    'Write-WarningMsg',
-    'Write-InfoMsg',
-    'Write-CheckResult',
-    'Test-Command',
-    'Get-CommandVersion',
-    'Get-ProjectRoot',
-    'Get-ExtensionDirectory',
-    'Get-PackageJsonProperty',
-    'Set-PackageJsonProperty'
-)
 
 #endregion

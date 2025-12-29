@@ -1,10 +1,12 @@
-import { MCPServer } from "./mcpServer";
+#!/usr/bin/env node
 
-// Entry point for standalone server execution
+import { MCPServer } from "./mcpServer.js";
+
+// Entry point for standalone MCP server execution
 const server = new MCPServer({
-  name: "vscode-mcp-server",
-  version: "0.0.1",
-  logLevel: "info",
+  name: "chalcp-mcp-server",
+  version: "0.1.0",
+  logLevel: (process.env.MCP_LOG_LEVEL as any) || "info",
 });
 
 server.start().catch((error) => {
@@ -14,6 +16,13 @@ server.start().catch((error) => {
 
 // Handle graceful shutdown
 process.on("SIGINT", async () => {
+  console.error("Received SIGINT, shutting down gracefully...");
+  await server.stop();
+  process.exit(0);
+});
+
+process.on("SIGTERM", async () => {
+  console.error("Received SIGTERM, shutting down gracefully...");
   await server.stop();
   process.exit(0);
 });

@@ -1,0 +1,20 @@
+# Source files (we only need dist/)
+src/
+tsconfig.json
+.vscode/
+.vscodeignore
+
+# Development files
+.eslintrc.json
+*.log
+*.vsix
+
+# Documentation that's not needed in npm package
+docs/
+
+# Build scripts
+build/
+
+# Git
+.gitignore
+.git/

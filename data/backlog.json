@@ -1,0 +1,42 @@
+
+{
+  "iteration": {
+    "name": "Sprint 25",
+    "startDate": "2025-12-15",
+    "endDate": "2025-12-29"
+  },
+  "items": [
+    {
+      "id": 123,
+      "type": "UserStory",
+      "title": "As a user, I can reset my password via email link",
+      "state": "Active",
+      "assignedTo": "Alice",
+      "area": "Web",
+      "tags": ["auth", "security"],
+      "acceptanceCriteria": [
+        "User receives reset email within 1 minute",
+        "Link expires in 30 minutes",
+        "Audit log entry is created"
+      ],
+      "children": [
+        {"id": 900, "type": "Task", "title": "Implement backend endpoint", "state": "Active", "assignedTo": "Bob"},
+        {"id": 901, "type": "Bug", "title": "Rate limiter misconfiguration", "state": "Resolved", "severity": "High"}
+      ],
+      "links": [
+        {"type": "PR", "id": "PR-4502", "repo": "web-api", "status": "Open"}
+      ]
+    },
+    {
+      "id": 124,
+      "type": "Bug",
+      "title": "UI freezes on login",
+      "state": "New",
+      "assignedTo": "Carol",
+      "area": "Web",
+      "severity": "High",
+      "tags": ["ux"],
+      "children": []
+    }
+  ]
+}

@@ -3,16 +3,22 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
-  ListResourcesRequestSchema,
-  ReadResourceRequestSchema,
-  ListPromptsRequestSchema,
-  GetPromptRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 
 export interface MCPServerConfig {
   name: string;
   version: string;
   logLevel?: "debug" | "info" | "warn" | "error";
+}
+
+interface CalculateArgs {
+  operation: string;
+  a: number;
+  b: number;
+}
+
+interface TimeArgs {
+  format?: string;
 }
 
 export class MCPServer {
@@ -29,8 +35,6 @@ export class MCPServer {
       {
         capabilities: {
           tools: {},
-          resources: {},
-          prompts: {},
         },
       }
     );
@@ -38,213 +42,196 @@ export class MCPServer {
     this.setupHandlers();
   }
 
+  // #region Tool Definitions
+
+  private getCalculateToolDefinition() {
+    return {
+      name: "calculate",
+      description: "Perform a simple calculation (add, subtract, multiply, divide)",
+      inputSchema: {
+        type: "object",
+        properties: {
+          operation: {
+            type: "string",
+            description: "The operation to perform",
+            enum: ["add", "subtract", "multiply", "divide"],
+          },
+          a: {
+            type: "number",
+            description: "First number",
+          },
+          b: {
+            type: "number",
+            description: "Second number",
+          },
+        },
+        required: ["operation", "a", "b"],
+      },
+    };
+  }
+
+  private getTimeToolDefinition() {
+    return {
+      name: "get_current_time",
+      description: "Get the current date and time",
+      inputSchema: {
+        type: "object",
+        properties: {
+          format: {
+            type: "string",
+            description: "Time format: 'short' or 'full'",
+            enum: ["short", "full"],
+            default: "short",
+          },
+        },
+      },
+    };
+  }
+
+  // #endregion
+
+  // #region Calculate Tool
+
+  private performCalculation(operation: string, a: number, b: number): number {
+    switch (operation) {
+      case "add":
+        return a + b;
+      case "subtract":
+        return a - b;
+      case "multiply":
+        return a * b;
+      case "divide":
+        if (b === 0) {
+          throw new Error("Division by zero is not allowed");
+        }
+        return a / b;
+      default:
+        throw new Error(`Unknown operation: ${operation}`);
+    }
+  }
+
+  private getOperationSymbol(operation: string): string {
+    const symbols: Record<string, string> = {
+      add: "+",
+      subtract: "-",
+      multiply: "×",
+      divide: "÷",
+    };
+    return symbols[operation] || operation;
+  }
+
+  private formatCalculationResult(operation: string, a: number, b: number, result: number) {
+    const symbol = this.getOperationSymbol(operation);
+    return {
+      operation,
+      operands: { a, b },
+      result,
+      expression: `this response is comming from chaltito: ${a} ${symbol} ${b} = ${result}`,
+    };
+  }
+
+  private async executeCalculate(args: CalculateArgs) {
+    const { operation, a, b } = args;
+    const result = this.performCalculation(operation, a, b);
+    const formattedResult = this.formatCalculationResult(operation, a, b, result);
+    return this.createSuccessResponse(formattedResult);
+  }
+
+  // #endregion
+
+  // #region Time Tool
+
+  private formatTimeString(format: string): string {
+    const now = new Date();
+    return format === "full" ? now.toLocaleString() : now.toLocaleTimeString();
+  }
+
+  private formatTimeResult(format: string) {
+    const now = new Date();
+    return {
+      timestamp: now.toISOString(),
+      formatted: this.formatTimeString(format),
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    };
+  }
+
+  private async executeGetCurrentTime(args: TimeArgs) {
+    const format = args?.format || "short";
+    const result = this.formatTimeResult(format);
+    return this.createSuccessResponse(result);
+  }
+
+  // #endregion
+
+  // #region Response Helpers
+
+  private createSuccessResponse(data: unknown) {
+    return {
+      content: [
+        {
+          type: "text" as const,
+          text: JSON.stringify(data, null, 2),
+        },
+      ],
+    };
+  }
+
+  private createErrorResponse(error: unknown) {
+    return {
+      content: [
+        {
+          type: "text" as const,
+          text: JSON.stringify({
+            error: error instanceof Error ? error.message : "Unknown error",
+          }),
+        },
+      ],
+      isError: true,
+    };
+  }
+
+  // #endregion
+
+  // #region Request Handlers
+
   private setupHandlers(): void {
-    // List available tools
+    this.setupListToolsHandler();
+    this.setupCallToolHandler();
+  }
+
+  private setupListToolsHandler(): void {
     this.server.setRequestHandler(ListToolsRequestSchema, async () => {
       return {
         tools: [
-          {
-            name: "get_workspace_info",
-            description: "Get information about the current VS Code workspace",
-            inputSchema: {
-              type: "object",
-              properties: {
-                includeFiles: {
-                  type: "boolean",
-                  description: "Whether to include file list",
-                  default: false,
-                },
-              },
-            },
-          },
-          {
-            name: "execute_command",
-            description: "Execute a VS Code command",
-            inputSchema: {
-              type: "object",
-              properties: {
-                command: {
-                  type: "string",
-                  description: "The VS Code command to execute",
-                },
-                args: {
-                  type: "array",
-                  description: "Arguments for the command",
-                  items: {
-                    type: "string",
-                  },
-                },
-              },
-              required: ["command"],
-            },
-          },
-          {
-            name: "create_file",
-            description: "Create a new file in the workspace",
-            inputSchema: {
-              type: "object",
-              properties: {
-                path: {
-                  type: "string",
-                  description: "Relative path for the new file",
-                },
-                content: {
-                  type: "string",
-                  description: "Content of the file",
-                },
-              },
-              required: ["path", "content"],
-            },
-          },
+          this.getCalculateToolDefinition(),
+          this.getTimeToolDefinition(),
         ],
       };
     });
+  }
 
-    // Handle tool calls
+  private setupCallToolHandler(): void {
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
 
-      switch (name) {
-        case "get_workspace_info":
-          return {
-            content: [
-              {
-                type: "text",
-                text: JSON.stringify(
-                  {
-                    message: "Workspace info retrieved",
-                    includeFiles: args?.includeFiles || false,
-                  },
-                  null,
-                  2
-                ),
-              },
-            ],
-          };
-
-        case "execute_command":
-          return {
-            content: [
-              {
-                type: "text",
-                text: JSON.stringify({
-                  message: `Command ${args?.command} would be executed`,
-                  command: args?.command,
-                  args: args?.args || [],
-                }),
-              },
-            ],
-          };
-
-        case "create_file":
-          return {
-            content: [
-              {
-                type: "text",
-                text: JSON.stringify({
-                  message: "File created successfully",
-                  path: args?.path,
-                }),
-              },
-            ],
-          };
-
-        default:
-          throw new Error(`Unknown tool: ${name}`);
+      try {
+        switch (name) {
+          case "calculate":
+            return await this.executeCalculate(args as unknown as CalculateArgs);
+          case "get_current_time":
+            return await this.executeGetCurrentTime(args as unknown as TimeArgs);
+          default:
+            throw new Error(`Unknown tool: ${name}`);
+        }
+      } catch (error) {
+        return this.createErrorResponse(error);
       }
-    });
-
-    // List available resources
-    this.server.setRequestHandler(ListResourcesRequestSchema, async () => {
-      return {
-        resources: [
-          {
-            uri: "vscode://workspace/settings",
-            name: "Workspace Settings",
-            description: "Current VS Code workspace settings",
-            mimeType: "application/json",
-          },
-          {
-            uri: "vscode://workspace/extensions",
-            name: "Installed Extensions",
-            description: "List of installed VS Code extensions",
-            mimeType: "application/json",
-          },
-        ],
-      };
-    });
-
-    // Read resource content
-    this.server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
-      const { uri } = request.params;
-
-      if (uri === "vscode://workspace/settings") {
-        return {
-          contents: [
-            {
-              uri,
-              mimeType: "application/json",
-              text: JSON.stringify({ settings: "placeholder" }, null, 2),
-            },
-          ],
-        };
-      }
-
-      if (uri === "vscode://workspace/extensions") {
-        return {
-          contents: [
-            {
-              uri,
-              mimeType: "application/json",
-              text: JSON.stringify({ extensions: [] }, null, 2),
-            },
-          ],
-        };
-      }
-
-      throw new Error(`Resource not found: ${uri}`);
-    });
-
-    // List available prompts
-    this.server.setRequestHandler(ListPromptsRequestSchema, async () => {
-      return {
-        prompts: [
-          {
-            name: "code_review",
-            description: "Generate a code review prompt",
-            arguments: [
-              {
-                name: "language",
-                description: "Programming language",
-                required: true,
-              },
-            ],
-          },
-        ],
-      };
-    });
-
-    // Get prompt content
-    this.server.setRequestHandler(GetPromptRequestSchema, async (request) => {
-      const { name, arguments: args } = request.params;
-
-      if (name === "code_review") {
-        return {
-          messages: [
-            {
-              role: "user",
-              content: {
-                type: "text",
-                text: `Please review this ${args?.language || "code"} for best practices, potential bugs, and improvements.`,
-              },
-            },
-          ],
-        };
-      }
-
-      throw new Error(`Unknown prompt: ${name}`);
     });
   }
+
+  // #endregion
+
+  // #region Lifecycle
 
   async start(): Promise<void> {
     const transport = new StdioServerTransport();
@@ -256,4 +243,6 @@ export class MCPServer {
     await this.server.close();
     console.error(`MCP Server "${this.config.name}" stopped`);
   }
+
+  // #endregion
 }

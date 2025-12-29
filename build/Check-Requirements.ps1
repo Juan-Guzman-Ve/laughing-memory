@@ -300,7 +300,7 @@ function Write-NextSteps {
     if ($failedCount -eq 0 -and $warningCount -eq 0) {
         Write-Host "✓ All requirements met! You're ready to develop." -ForegroundColor Green
         Write-Host "`nNext steps:" -ForegroundColor Cyan
-        Write-Host "  1. cd mcp-vscode-extension" -ForegroundColor White
+        Write-Host "  1. cd mcp" -ForegroundColor White
         Write-Host "  2. npm run compile" -ForegroundColor White
         Write-Host "  3. Press F5 in VS Code to test" -ForegroundColor White
     }
@@ -375,6 +375,6 @@ function Invoke-RequirementsCheck {
 #endregion
 
 # Execute main function
-Set-Location "..\mcp-vscode-extension"
+Set-Location "..\mcp"
 Invoke-RequirementsCheck
 Set-Location "..\build"
