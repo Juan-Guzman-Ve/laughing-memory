@@ -4,29 +4,22 @@ import { DynamicStructuredTool } from '@langchain/core/tools';
 import { z } from 'zod';
 import path from 'path';
 
-/**
- * MCP Client wrapper for connecting to MCP server
- */
+
 export class MCPClientWrapper {
   private client: Client | null = null;
   private transport: StdioClientTransport | null = null;
 
-  /**
-   * Connect to MCP server via stdio
-   */
   async connect(): Promise<void> {
     // Get MCP server path - from agent root, go up to workspace root, then to mcp server
     const mcpServerPath = path.resolve(process.cwd(), '..', 'mcp', 'dist', 'server', 'index.js');
     
-    console.log('🔌 Connecting to MCP server at:', mcpServerPath);
+    console.log('Connecting to MCP server at:', mcpServerPath);
     
-    // Create transport to MCP server
     this.transport = new StdioClientTransport({
       command: 'node',
       args: [mcpServerPath],
     });
 
-    // Create MCP client
     this.client = new Client(
       {
         name: 'azure-devops-agent',
@@ -37,28 +30,23 @@ export class MCPClientWrapper {
       }
     );
 
-    // Connect to server
     await this.client.connect(this.transport);
-    console.log('✅ Connected to MCP server');
+    console.log('Connected to MCP server');
   }
 
-  /**
-   * Discover tools from MCP server and convert to LangChain tools
-   */
-  async getTools(): Promise<DynamicStructuredTool[]> {
+  async getTools(): Promise<any[]> {
     if (!this.client) {
       throw new Error('MCP client not connected. Call connect() first.');
     }
 
-    // List available tools from MCP server
     const { tools } = await this.client.listTools();
-    console.log(`📋 Discovered ${tools.length} MCP tools:`, tools.map(t => t.name));
+    console.log(`Discovered ${tools.length} MCP tools:`, tools.map(t => t.name));
 
     // Convert MCP tools to LangChain DynamicStructuredTool
-    const langchainTools: DynamicStructuredTool[] = tools.map((mcpTool) => {
+    const langchainTools = tools.map((mcpTool): any => {
       const schema = this.convertMCPSchemaToZod(mcpTool.inputSchema);
       
-      return new DynamicStructuredTool({
+      return new (DynamicStructuredTool as any)({
         name: mcpTool.name,
         description: mcpTool.description || '',
         schema: schema,
@@ -67,8 +55,8 @@ export class MCPClientWrapper {
             throw new Error('MCP client disconnected');
           }
 
-          console.log(`🔧 Calling MCP tool: ${mcpTool.name}`);
-          console.log(`📦 Input:`, JSON.stringify(input, null, 2));
+          console.log(`Calling MCP tool: ${mcpTool.name}`);
+          console.log(`Input:`, JSON.stringify(input, null, 2));
 
           try {
             // Call MCP tool
@@ -100,9 +88,6 @@ export class MCPClientWrapper {
     return langchainTools;
   }
 
-  /**
-   * Convert MCP input schema to Zod schema for LangChain
-   */
   private convertMCPSchemaToZod(inputSchema: any): z.ZodType<any> {
     if (!inputSchema || !inputSchema.properties) {
       return z.object({});
@@ -132,9 +117,32 @@ export class MCPClientWrapper {
     return z.object(shape);
   }
 
-  /**
-   * Disconnect from MCP server
-   */
+  async callTool(name: string, args: any): Promise<any> {
+    if (!this.client) {
+      throw new Error('MCP client not connected. Call connect() first.');
+    }
+
+    const result = await this.client.callTool({
+      name,
+      arguments: args || {},
+    });
+
+    // Extract text content from MCP response
+    const resultContent = result.content as any;
+    if (resultContent && Array.isArray(resultContent) && resultContent.length > 0) {
+      const textContent = resultContent.find((c: any) => c.type === 'text');
+      if (textContent && textContent.text) {
+        try {
+          return JSON.parse(textContent.text);
+        } catch {
+          return textContent.text;
+        }
+      }
+    }
+
+    return result;
+  }
+
   async disconnect(): Promise<void> {
     if (this.client) {
       await this.client.close();
